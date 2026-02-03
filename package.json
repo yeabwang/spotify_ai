@@ -1,6 +1,16 @@
 {
-  "name": "spotify-client",
-  "version": "2.0.5",
+  "name": "spotify-ai",
+  "version": "3.0.0",
+  "description": "AI-Powered Spotify Music Discovery - Intelligent playlist generation using OpenAI and Spotify",
+  "author": "yeabwang",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yeabwang/spotify_ai.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yeabwang/spotify_ai/issues"
+  },
+  "homepage": "https://github.com/yeabwang/spotify_ai#readme",
   "private": true,
   "dependencies": {
     "@ant-design/pro-form": "^2.32.0",
@@ -13,6 +23,7 @@
     "i18next": "^23.15.1",
     "javascript-time-ago": "^2.5.12",
     "lodash": "^4.17.23",
+    "openai": "^6.17.0",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
     "react-drag-listview": "^2.0.0",

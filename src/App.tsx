@@ -34,6 +34,7 @@ const BrowsePage = lazy(() => import('./pages/Browse'));
 const ArtistPage = lazy(() => import('./pages/Artist'));
 const PlaylistView = lazy(() => import('./pages/Playlist'));
 const ArtistDiscographyPage = lazy(() => import('./pages/Discography'));
+const MoodMusicPage = lazy(() => import('./pages/MoodMusic'));
 
 const Profile = lazy(() => import('./pages/User/Home'));
 const ProfileTracks = lazy(() => import('./pages/User/Songs'));
@@ -114,6 +115,7 @@ const RoutesComponent = memo(() => {
     () =>
       [
         { path: '', element: <Home container={container} />, public: true },
+        { path: '/mood', element: <MoodMusicPage />, public: false },
         { path: '/collection/tracks', element: <LikedSongsPage container={container} /> },
         {
           public: true,
@@ -209,14 +211,16 @@ const RootComponent = () => {
   const playing = useAppSelector((state) => !state.spotify.state?.paused);
 
   useEffect(() => {
-    document.documentElement.setAttribute('lang', language);
-    i18next.changeLanguage(language);
+    // Always force English
+    document.documentElement.setAttribute('lang', 'en');
+    i18next.changeLanguage('en');
   }, [language]);
 
   const handleSpaceBar = useCallback(
     (e: KeyboardEvent) => {
       // @ts-ignore
-      if (e.target?.tagName?.toUpperCase() === 'INPUT') return;
+      const tagName = e.target?.tagName?.toUpperCase();
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA') return;
       if (playing === undefined) return;
       e.stopPropagation();
       if (e.key === ' ' || e.code === 'Space' || e.keyCode === 32) {
