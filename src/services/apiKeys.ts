@@ -1,11 +1,17 @@
 /**
  * API Keys Service
  * 
- * Securely manages user-provided API keys in localStorage.
- * Keys are stored encrypted using a simple obfuscation (for basic protection).
+ * Manages user-provided API keys in localStorage.
+ * Keys are stored with simple obfuscation (NOT true encryption - only prevents casual viewing).
  * 
- * Note: Spotify Client ID and Redirect URL are pre-configured via environment variables.
- * Users only need to provide their OpenAI API key.
+ * IMPORTANT: This is client-side storage with inherent limitations:
+ * - Keys are stored in the browser and can be extracted by determined users
+ * - For production deployments, consider using a backend proxy for API calls
+ * - Never expose API keys in network requests visible to users
+ * - The obfuscation used here is reversible and should not be considered secure
+ * 
+ * Note: Spotify Client ID and Redirect URL should be configured via environment variables.
+ * Users provide their OpenAI API key through the Settings page.
  */
 
 const STORAGE_KEY = 'spotify_ai_keys';
@@ -95,15 +101,40 @@ export const getSpotifyRedirectUrl = (): string => {
 };
 
 /**
- * Check if all required keys are configured
+ * Check if Spotify is configured (via environment variables)
  */
-export const isFullyConfigured = (): { configured: boolean; missing: string[] } => {
+export const isSpotifyConfigured = (): boolean => {
+  return !!getSpotifyClientId();
+};
+
+/**
+ * Check if AI features are configured (OpenAI API key)
+ */
+export const isAIConfigured = (): boolean => {
+  return !!getOpenAIApiKey();
+};
+
+/**
+ * Check if all required keys are configured
+ * Returns separate status for Spotify and AI features
+ */
+export const isFullyConfigured = (): { 
+  configured: boolean; 
+  missing: string[];
+  spotifyConfigured: boolean;
+  aiConfigured: boolean;
+} => {
   const missing: string[] = [];
+  const spotifyConfigured = isSpotifyConfigured();
+  const aiConfigured = isAIConfigured();
   
-  if (!getOpenAIApiKey()) missing.push('OpenAI API Key');
+  if (!spotifyConfigured) missing.push('Spotify Client ID (environment variable)');
+  if (!aiConfigured) missing.push('OpenAI API Key');
   
   return {
     configured: missing.length === 0,
     missing,
+    spotifyConfigured,
+    aiConfigured,
   };
 };

@@ -225,9 +225,10 @@ Built on top of a **Spotify Web Client** with:
 
 - Node.js 16+ and Yarn
 - Spotify Premium account
+- Spotify Developer App credentials
 - OpenAI API key
 
-### Quick Start
+### Quick Start (Local Development)
 
 1. **Clone the repository**
 
@@ -240,43 +241,61 @@ Built on top of a **Spotify Web Client** with:
    ```bash
    yarn install
    ```
-3. **Start the development server**
+3. **Configure environment variables**
+
+   Copy `.env.dist` to `.env` and fill in the required values:
+
+   ```bash
+   cp .env.dist .env
+   ```
+
+   Edit `.env` with your credentials:
+
+   ```env
+   # Required: Spotify API Configuration
+   REACT_APP_SPOTIFY_CLIENT_ID=<your_spotify_client_id>
+   REACT_APP_SPOTIFY_REDIRECT_URL=http://localhost:3000
+
+   # Optional: OpenAI API Key (can also be entered in Settings page)
+   REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
+   ```
+
+   **Get your Spotify credentials:**
+   - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
+   - Create a new app
+   - Copy the **Client ID**
+   - Add `http://localhost:3000` as a **Redirect URI** in your app settings
+
+4. **Start the development server**
 
    ```bash
    yarn start
    ```
-4. **Open your browser**
+5. **Open your browser**
 
    Navigate to `http://localhost:3000`
 
-5. **Configure your OpenAI API key**
+6. **Configure your OpenAI API key**
 
-   Go to **Settings** (⚙️) in the app and enter your OpenAI API key.
+   If you didn't set it in `.env`, go to **Settings** (⚙️) in the app and enter your OpenAI API key.
    
    **Get your API key:**
    - **OpenAI**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-   
-   > **Note:** Spotify integration is pre-configured. Just log in with your Spotify account!
 
-### For Developers (Self-Hosting)
+### Self-Hosting / Production Deployment
 
-If you want to self-host with your own Spotify app, create a `.env` file:
+For self-hosted deployments, the following environment variables are required:
 
-```env
-# Spotify Configuration (optional - pre-configured for hosted version)
-REACT_APP_SPOTIFY_CLIENT_ID=<your_spotify_client_id>
-REACT_APP_SPOTIFY_REDIRECT_URL=http://localhost:3000
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `REACT_APP_SPOTIFY_CLIENT_ID` | **Yes** | Your Spotify app's Client ID |
+| `REACT_APP_SPOTIFY_REDIRECT_URL` | **Yes** | Must match your deployment URL exactly |
+| `REACT_APP_OPENAI_API_KEY` | No | Optional; users can enter in Settings |
+| `REACT_APP_OPENAI_MODEL` | No | Defaults to `gpt-5.2-chat-latest` |
 
-# OpenAI Configuration (optional - users can enter in Settings)
-REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
-
-# Optional: Customize OpenAI model (defaults to gpt-5.2-chat-latest)
-# REACT_APP_OPENAI_MODEL=gpt-5
-```
-
-**Spotify Developer Setup:**
-- Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
-- Add your redirect URL (e.g., `http://localhost:3000`) to the app settings
+**Important:** The `REACT_APP_SPOTIFY_REDIRECT_URL` must exactly match:
+1. The URL where your app is deployed (e.g., `https://your-domain.com`)
+2. A Redirect URI configured in your Spotify Developer Dashboard
 
 **Customize AI behavior** (optional):
 Modify `src/config/ai.config.ts` to adjust:
