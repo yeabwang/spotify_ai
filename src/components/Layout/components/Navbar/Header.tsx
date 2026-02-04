@@ -56,10 +56,10 @@ const Header = ({ opacity }: { opacity: number; title?: string }) => {
     >
       <div className='flex flex-row items-center'>
         <Space>
-          {/*
-          <div className='news'>
-            <News />
-          </div> */}
+          {/* Settings Link */}
+          <Link to="/settings" className="settings-link" title="Settings">
+            <span style={{ fontSize: '20px', opacity: 0.7, cursor: 'pointer' }}>⚙️</span>
+          </Link>
 
           {user ? (
             <div className='avatar-container'>

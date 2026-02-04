@@ -48,6 +48,7 @@ const SearchAlbums = lazy(() => import('./pages/Search/Albums'));
 const SearchPlaylist = lazy(() => import('./pages/Search/Playlists'));
 const SearchPageArtists = lazy(() => import('./pages/Search/Artists'));
 const RecentlySearched = lazy(() => import('./pages/Search/RecentlySearched'));
+const SettingsPage = lazy(() => import('./pages/Settings'));
 
 window.addEventListener('resize', () => {
   const vh = window.innerWidth;
@@ -135,6 +136,7 @@ const RoutesComponent = memo(() => {
         { public: true, path: '/genre/:genreId', element: <GenrePage /> },
         { public: true, path: '/search', element: <BrowsePage /> },
         { path: '/recent-searches', element: <RecentlySearched /> },
+        { path: '/settings', element: <SettingsPage />, public: true },
         {
           public: true,
           path: '/search/:search',

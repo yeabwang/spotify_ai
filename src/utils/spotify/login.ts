@@ -1,10 +1,12 @@
 import Axios from 'axios';
 import { getFromLocalStorageWithExpiry, setLocalStorageWithExpiry } from '../localstorage';
 import axios from 'axios';
+import { getSpotifyClientId, getSpotifyRedirectUrl } from '../../services/apiKeys';
 
 /* eslint-disable import/no-anonymous-default-export */
-const client_id = process.env.REACT_APP_SPOTIFY_CLIENT_ID as string;
-const redirect_uri = process.env.REACT_APP_SPOTIFY_REDIRECT_URL as string;
+// Use user-provided keys or fall back to env vars
+const getClientId = () => getSpotifyClientId();
+const getRedirectUri = () => getSpotifyRedirectUrl();
 
 const authUrl = new URL('https://accounts.spotify.com/authorize');
 
@@ -64,8 +66,8 @@ const logInWithSpotify = async () => {
   const codeChallenge = base64encode(hashed);
 
   authUrl.search = new URLSearchParams({
-    client_id,
-    redirect_uri,
+    client_id: getClientId(),
+    redirect_uri: getRedirectUri(),
     response_type: 'code',
     scope: SCOPES.join(' '),
     code_challenge_method: 'S256',
@@ -80,8 +82,8 @@ const requestToken = async (code: string) => {
 
   const body = {
     code,
-    client_id,
-    redirect_uri,
+    client_id: getClientId(),
+    redirect_uri: getRedirectUri(),
     code_verifier,
     grant_type: 'authorization_code',
   };
@@ -135,7 +137,7 @@ export const getRefreshToken = async () => {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-      client_id,
+      client_id: getClientId(),
       grant_type: 'refresh_token',
       refresh_token: refreshToken,
     }),

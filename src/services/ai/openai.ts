@@ -1,14 +1,36 @@
 import OpenAI from 'openai';
 import { UserTasteProfile, formatTasteProfileForAI } from '../userTaste';
 import { getAIConfig } from '../../config/ai.config';
+import { getOpenAIApiKey } from '../apiKeys';
 
 const config = getAIConfig();
 
-const openai = new OpenAI({
-  apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true, // Note: In production, use a backend proxy
-  timeout: config.openai.timeout,
-});
+// Create OpenAI client with user's API key or env key
+const getOpenAIClient = (): OpenAI => {
+  const apiKey = getOpenAIApiKey();
+  if (!apiKey) {
+    console.warn('⚠️ [OpenAI] No API key configured. Please add your key in Settings.');
+  }
+  return new OpenAI({
+    apiKey: apiKey || 'missing-key',
+    dangerouslyAllowBrowser: true, // Note: In production, use a backend proxy
+    timeout: config.openai.timeout,
+  });
+};
+
+// Lazy-initialized client (recreated if key changes)
+let openai: OpenAI | null = null;
+const getClient = (): OpenAI => {
+  if (!openai) {
+    openai = getOpenAIClient();
+  }
+  return openai;
+};
+
+// Force client refresh (call after user changes API key)
+export const refreshOpenAIClient = (): void => {
+  openai = null;
+};
 
 export interface EmotionPoint {
   valence: number; // -1 to 1 (negative to positive)
@@ -166,7 +188,7 @@ Current context:
 ${userContext.weather ? `- Weather: ${userContext.weather.condition}, ${userContext.weather.temperature}°C` : ''}
 `;
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -223,7 +245,7 @@ ${userContext.tasteProfile ? formatTasteProfileForAI(userContext.tasteProfile) :
 
   const recentContext = conversationHistory.slice(-6).map(m => `${m.role}: ${m.content}`).join('\n');
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -295,7 +317,7 @@ Current context:
 ${userContext.weather ? `- Weather: ${userContext.weather.condition}, ${userContext.weather.temperature}°C` : ''}
 `;
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -366,7 +388,7 @@ export const generatePlaylistRecommendations = async (
     ? formatTasteProfileForAI(userContext.tasteProfile)
     : 'No taste profile - recommend popular and varied tracks.';
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -459,7 +481,7 @@ export const deriveMusicPlan = async (
     ? formatTasteProfileForAI(userContext.tasteProfile)
     : 'No taste profile - use broad, popular music constraints.';
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -538,7 +560,7 @@ export const rankAndExplainCandidates = async (
     ? formatTasteProfileForAI(userContext.tasteProfile)
     : 'No taste profile - prioritize general fit.';
 
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -731,7 +753,7 @@ export const generateChatResponse = async (
   conversationHistory: ChatMessage[],
   moodAnalysis?: MoodAnalysis
 ): Promise<string> => {
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -754,7 +776,7 @@ export const analyzeEmotionFromMapClick = async (
   endPoint: EmotionPoint,
   userContext: UserContext
 ): Promise<MoodAnalysis> => {
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
@@ -803,7 +825,7 @@ export const getQuickVibeMood = async (
   vibeName: string,
   userContext: UserContext
 ): Promise<MoodAnalysis> => {
-  const response = await openai.chat.completions.create({
+  const response = await getClient().chat.completions.create({
     model: config.openai.model,
     max_completion_tokens: config.openai.maxTokens,
     messages: [
