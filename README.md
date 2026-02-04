@@ -2,6 +2,10 @@
   <h1>🎧 Spotify AI - Intelligent Music Discovery</h1>
   <p><strong>Your personal AI DJ</strong></p>
   
+  <p>
+    <a href="https://spotify-ai-pyuo.onrender.com/">🚀 Try Live Demo</a>
+  </p>
+  
 <img src="https://img.shields.io/badge/Spotify-1ED760?style=for-the-badge&logo=spotify&logoColor=white" alt="Spotify Badge">
 <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI Badge">
 <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React Badge">
@@ -225,10 +229,10 @@ Built on top of a **Spotify Web Client** with:
 
 - Node.js 16+ and Yarn
 - Spotify Premium account
-- OpenAI API key
 - Spotify Developer App credentials
+- OpenAI API key
 
-### Quick Start
+### Quick Start (Local Development)
 
 1. **Clone the repository**
 
@@ -243,32 +247,29 @@ Built on top of a **Spotify Web Client** with:
    ```
 3. **Configure environment variables**
 
-   Create a `.env` file in the root directory:
+   Copy `.env.dist` to `.env` and fill in the required values:
 
-   ```env
-   # Spotify Configuration
-   REACT_APP_SPOTIFY_CLIENT_ID=<your_spotify_client_id>
-   REACT_APP_SPOTIFY_REDIRECT_URL=http://localhost:3000/callback
-
-   # OpenAI Configuration (for AI features)
-   REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
-   
-   # Optional: Customize OpenAI model (defaults to gpt-5.2-chat-latest)
-   # REACT_APP_OPENAI_MODEL=gpt-5
+   ```bash
+   cp .env.dist .env
    ```
 
-   **Get your credentials:**
+   Edit `.env` with your credentials:
 
-   - **Spotify**: Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
-   - **OpenAI**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-   
-   **Customize AI behavior** (optional):
-   
-   Modify `src/config/ai.config.ts` to adjust:
-   - Model selection and parameters
-   - Scoring weights (taste, mood, popularity, play frequency)
-   - Generation defaults (track count, discovery level)
-   - Preference storage settings
+   ```env
+   # Required: Spotify API Configuration
+   REACT_APP_SPOTIFY_CLIENT_ID=<your_spotify_client_id>
+   REACT_APP_SPOTIFY_REDIRECT_URL=http://localhost:3000
+
+   # Optional: OpenAI API Key (can also be entered in Settings page)
+   REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
+   ```
+
+   **Get your Spotify credentials:**
+   - Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
+   - Create a new app
+   - Copy the **Client ID**
+   - Add `http://localhost:3000` as a **Redirect URI** in your app settings
+
 4. **Start the development server**
 
    ```bash
@@ -277,6 +278,35 @@ Built on top of a **Spotify Web Client** with:
 5. **Open your browser**
 
    Navigate to `http://localhost:3000`
+
+6. **Configure your OpenAI API key**
+
+   If you didn't set it in `.env`, go to **Settings** (⚙️) in the app and enter your OpenAI API key.
+   
+   **Get your API key:**
+   - **OpenAI**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+
+### Self-Hosting / Production Deployment
+
+For self-hosted deployments, the following environment variables are required:
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `REACT_APP_SPOTIFY_CLIENT_ID` | **Yes** | Your Spotify app's Client ID |
+| `REACT_APP_SPOTIFY_REDIRECT_URL` | **Yes** | Must match your deployment URL exactly |
+| `REACT_APP_OPENAI_API_KEY` | No | Optional; users can enter in Settings |
+| `REACT_APP_OPENAI_MODEL` | No | Defaults to `gpt-5.2-chat-latest` |
+
+**Important:** The `REACT_APP_SPOTIFY_REDIRECT_URL` must exactly match:
+1. The URL where your app is deployed (e.g., `https://your-domain.com`)
+2. A Redirect URI configured in your Spotify Developer Dashboard
+
+**Customize AI behavior** (optional):
+Modify `src/config/ai.config.ts` to adjust:
+- Model selection and parameters
+- Scoring weights (taste, mood, popularity, play frequency)
+- Generation defaults (track count, discovery level)
+- Preference storage settings
 
 ### Production Build
 
