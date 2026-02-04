@@ -226,7 +226,6 @@ Built on top of a **Spotify Web Client** with:
 - Node.js 16+ and Yarn
 - Spotify Premium account
 - OpenAI API key
-- Spotify Developer App credentials
 
 ### Quick Start
 
@@ -241,42 +240,50 @@ Built on top of a **Spotify Web Client** with:
    ```bash
    yarn install
    ```
-3. **Configure environment variables**
-
-   Create a `.env` file in the root directory:
-
-   ```env
-   # Spotify Configuration
-   REACT_APP_SPOTIFY_CLIENT_ID=<your_spotify_client_id>
-   REACT_APP_SPOTIFY_REDIRECT_URL=http://localhost:3000/callback
-
-   # OpenAI Configuration (for AI features)
-   REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
-   
-   # Optional: Customize OpenAI model (defaults to gpt-5.2-chat-latest)
-   # REACT_APP_OPENAI_MODEL=gpt-5
-   ```
-
-   **Get your credentials:**
-
-   - **Spotify**: Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
-   - **OpenAI**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-   
-   **Customize AI behavior** (optional):
-   
-   Modify `src/config/ai.config.ts` to adjust:
-   - Model selection and parameters
-   - Scoring weights (taste, mood, popularity, play frequency)
-   - Generation defaults (track count, discovery level)
-   - Preference storage settings
-4. **Start the development server**
+3. **Start the development server**
 
    ```bash
    yarn start
    ```
-5. **Open your browser**
+4. **Open your browser**
 
    Navigate to `http://localhost:3000`
+
+5. **Configure your OpenAI API key**
+
+   Go to **Settings** (⚙️) in the app and enter your OpenAI API key.
+   
+   **Get your API key:**
+   - **OpenAI**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+   
+   > **Note:** Spotify integration is pre-configured. Just log in with your Spotify account!
+
+### For Developers (Self-Hosting)
+
+If you want to self-host with your own Spotify app, create a `.env` file:
+
+```env
+# Spotify Configuration (optional - pre-configured for hosted version)
+REACT_APP_SPOTIFY_CLIENT_ID=<your_spotify_client_id>
+REACT_APP_SPOTIFY_REDIRECT_URL=http://localhost:3000
+
+# OpenAI Configuration (optional - users can enter in Settings)
+REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
+
+# Optional: Customize OpenAI model (defaults to gpt-5.2-chat-latest)
+# REACT_APP_OPENAI_MODEL=gpt-5
+```
+
+**Spotify Developer Setup:**
+- Create an app at [Spotify Developer Dashboard](https://developer.spotify.com/dashboard/applications)
+- Add your redirect URL (e.g., `http://localhost:3000`) to the app settings
+
+**Customize AI behavior** (optional):
+Modify `src/config/ai.config.ts` to adjust:
+- Model selection and parameters
+- Scoring weights (taste, mood, popularity, play frequency)
+- Generation defaults (track count, discovery level)
+- Preference storage settings
 
 ### Production Build
 

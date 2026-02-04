@@ -4,17 +4,14 @@
  * Securely manages user-provided API keys in localStorage.
  * Keys are stored encrypted using a simple obfuscation (for basic protection).
  * 
- * IMPORTANT: This is client-side storage. For production, consider:
- * - Using a backend proxy for API calls
- * - Never exposing API keys in network requests visible to users
+ * Note: Spotify Client ID and Redirect URL are pre-configured via environment variables.
+ * Users only need to provide their OpenAI API key.
  */
 
 const STORAGE_KEY = 'spotify_ai_keys';
 
 export interface APIKeys {
-  spotifyClientId?: string;
   openaiApiKey?: string;
-  spotifyRedirectUrl?: string;
 }
 
 // Simple obfuscation (not true encryption, but prevents casual viewing)
@@ -36,14 +33,8 @@ const deobfuscate = (text: string): string => {
 export const saveAPIKeys = (keys: APIKeys): void => {
   const stored: Record<string, string> = {};
   
-  if (keys.spotifyClientId) {
-    stored.spotifyClientId = obfuscate(keys.spotifyClientId);
-  }
   if (keys.openaiApiKey) {
     stored.openaiApiKey = obfuscate(keys.openaiApiKey);
-  }
-  if (keys.spotifyRedirectUrl) {
-    stored.spotifyRedirectUrl = obfuscate(keys.spotifyRedirectUrl);
   }
   
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stored));
@@ -59,9 +50,7 @@ export const loadAPIKeys = (): APIKeys => {
     
     const parsed = JSON.parse(stored);
     return {
-      spotifyClientId: parsed.spotifyClientId ? deobfuscate(parsed.spotifyClientId) : undefined,
       openaiApiKey: parsed.openaiApiKey ? deobfuscate(parsed.openaiApiKey) : undefined,
-      spotifyRedirectUrl: parsed.spotifyRedirectUrl ? deobfuscate(parsed.spotifyRedirectUrl) : undefined,
     };
   } catch {
     return {};
@@ -80,15 +69,14 @@ export const clearAPIKeys = (): void => {
  */
 export const hasUserKeys = (): boolean => {
   const keys = loadAPIKeys();
-  return !!(keys.spotifyClientId || keys.openaiApiKey);
+  return !!keys.openaiApiKey;
 };
 
 /**
- * Get the effective Spotify Client ID (user's or env)
+ * Get the Spotify Client ID (from environment)
  */
 export const getSpotifyClientId = (): string => {
-  const keys = loadAPIKeys();
-  return keys.spotifyClientId || process.env.REACT_APP_SPOTIFY_CLIENT_ID || '';
+  return process.env.REACT_APP_SPOTIFY_CLIENT_ID || '';
 };
 
 /**
@@ -100,11 +88,10 @@ export const getOpenAIApiKey = (): string => {
 };
 
 /**
- * Get the effective Spotify Redirect URL (user's or env or default)
+ * Get the Spotify Redirect URL (from environment or default)
  */
 export const getSpotifyRedirectUrl = (): string => {
-  const keys = loadAPIKeys();
-  return keys.spotifyRedirectUrl || process.env.REACT_APP_SPOTIFY_REDIRECT_URL || window.location.origin;
+  return process.env.REACT_APP_SPOTIFY_REDIRECT_URL || window.location.origin;
 };
 
 /**
@@ -113,7 +100,6 @@ export const getSpotifyRedirectUrl = (): string => {
 export const isFullyConfigured = (): { configured: boolean; missing: string[] } => {
   const missing: string[] = [];
   
-  if (!getSpotifyClientId()) missing.push('Spotify Client ID');
   if (!getOpenAIApiKey()) missing.push('OpenAI API Key');
   
   return {

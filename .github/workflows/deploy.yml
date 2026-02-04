@@ -26,8 +26,7 @@ jobs:
       run: yarn build
       env:
         REACT_APP_SPOTIFY_CLIENT_ID: ${{ secrets.REACT_APP_SPOTIFY_CLIENT_ID }}
-        REACT_APP_SPOTIFY_REDIRECT_URL: ${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URL }}
-        REACT_APP_OPENAI_API_KEY: ${{ secrets.REACT_APP_OPENAI_API_KEY }}
+        REACT_APP_SPOTIFY_REDIRECT_URL: ${{ secrets.REACT_APP_SPOTIFY_REDIRECT_URL || 'https://spotify-ai.vercel.app' }}
         CI: false
     
     - name: Deploy to GitHub Pages (if configured)
