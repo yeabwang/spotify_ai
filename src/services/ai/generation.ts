@@ -66,7 +66,6 @@ import {
   deriveMusicPlan,
   rankAndExplainCandidates,
   CandidateTrack,
-  MusicPlan
 } from './openai';
 import type { Track } from '../../interfaces/track';
 import { 
@@ -529,9 +528,7 @@ export const generatePlaylist = async (
     }
     
     // Final validation: Ensure ALL recommendations have required scores
-    const validatedRecommendations = finalRecommendations.map((rec, index) => {
-      const track = finalTracks[index];
-      
+    const validatedRecommendations = finalRecommendations.map((rec, _index) => {
       // Double-check scores are valid numbers
       const tasteScore = typeof rec.tasteAlignment?.score === 'number' && !isNaN(rec.tasteAlignment.score)
         ? rec.tasteAlignment.score
