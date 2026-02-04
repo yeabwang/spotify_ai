@@ -227,7 +227,14 @@ const fetchCandidateTracksFromSpotify = async (
 ): Promise<Map<string, Track[]>> => {
   const results = new Map<string, Track[]>();
   
-  for (const query of searchQueries) {
+  // Filter out invalid queries
+  const validQueries = searchQueries.filter(q => q && q.trim() && q !== 'Unknown Track');
+  console.log(`🔍 [Spotify] Searching for ${validQueries.length} tracks (${searchQueries.length} total, ${searchQueries.length - validQueries.length} invalid)...`);
+  
+  for (let i = 0; i < validQueries.length; i++) {
+    const query = validQueries[i];
+    console.log(`  [${i + 1}/${validQueries.length}] Searching: "${query}"`);
+    
     try {
       const searchResult = await querySearch({
         q: query,
@@ -235,18 +242,23 @@ const fetchCandidateTracksFromSpotify = async (
         limit: limit,
       });
       
-      if (searchResult.data.tracks?.items && searchResult.data.tracks.items.length > 0) {
-        results.set(query, searchResult.data.tracks.items);
+      const items = searchResult.data.tracks?.items || [];
+      console.log(`    → Found ${items.length} results`);
+      
+      if (items.length > 0) {
+        results.set(query, items);
+      } else {
+        console.log(`    ⚠️ No results for: "${query}"`);
       }
-    } catch (error) {
-      console.error(`Failed to search for "${query}":`, error);
-      results.set(query, []);
+    } catch (error: any) {
+      console.error(`    ❌ Search failed for "${query}":`, error?.message || error);
     }
     
-    // Small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Delay between requests to avoid rate limiting (200ms)
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   
+  console.log(`✅ [Spotify] ${results.size}/${validQueries.length} queries returned results`);
   return results;
 };
 
@@ -324,37 +336,53 @@ export const generatePlaylist = async (
   usePreferences: boolean = true
 ): Promise<GenerationResult> => {
   try {
+    console.log('🎵 [Generation] Starting playlist generation...');
+    
     // Load user preferences
     const preferences = usePreferences ? loadUserPreferences() : getDefaultPreferences();
+    console.log('✅ [Generation] Loaded preferences:', { playlistLength: preferences.playlistLength, discoveryLevel: preferences.discoveryLevel });
     
     // Fetch user's taste profile
+    console.log('🔍 [Generation] Fetching user taste profile from Spotify...');
     const tasteProfile = await userTasteService.fetchUserTasteProfile();
+    console.log('✅ [Generation] Taste profile loaded:', { topArtists: tasteProfile.topArtists.slice(0, 5).join(', ') });
     
     // Get current context
     const userContext = await getUserContext(tasteProfile);
+    console.log('✅ [Generation] User context ready:', { timeOfDay: userContext.timeOfDay, dayOfWeek: userContext.dayOfWeek });
     
     // Step 1: Analyze mood from the prompt
+    console.log('🤖 [Generation] Step 1/7: Analyzing mood with AI...');
     const moodAnalysis = await analyzeMoodFromChat(
       prompt,
       conversationHistory,
       userContext
     );
+    console.log('✅ [Generation] Mood analyzed:', moodAnalysis.moodDescription);
     
     // Step 2: Derive music plan
+    console.log('🤖 [Generation] Step 2/7: Creating music plan...');
     const musicPlan = await deriveMusicPlan(moodAnalysis, userContext);
+    console.log('✅ [Generation] Plan ready:', musicPlan.intentSummary);
     
     // Step 3: Generate initial search queries from LLM
+    console.log('🤖 [Generation] Step 3/7: Generating track recommendations...');
     const initialRecommendations = await generatePlaylistRecommendations(
       moodAnalysis,
       userContext,
       preferences.playlistLength
     );
+    console.log('✅ [Generation] Got', initialRecommendations.tracks.length, 'track suggestions');
     
     // Step 4: Fetch candidate tracks from Spotify for each search query
+    console.log('🎧 [Generation] Step 4/7: Searching Spotify for tracks...');
     const searchQueries = initialRecommendations.tracks.map(rec => rec.searchQuery);
+    console.log('🔍 [Generation] Search queries:', searchQueries);
     const candidatesByQuery = await fetchCandidateTracksFromSpotify(searchQueries, 3);
+    console.log('✅ [Generation] Found', candidatesByQuery.size, 'query results');
     
     // Step 5: Flatten all candidates for ranking
+    console.log('📊 [Generation] Step 5/7: Processing candidates...');
     const allCandidates: CandidateTrack[] = [];
     Array.from(candidatesByQuery.values()).forEach(tracks => {
       allCandidates.push(...convertToCandidates(tracks));
@@ -364,8 +392,10 @@ export const generatePlaylist = async (
     const uniqueCandidates = Array.from(
       new Map(allCandidates.map(c => [c.id, c])).values()
     );
+    console.log('✅ [Generation] Got', uniqueCandidates.length, 'unique candidates');
     
     // Step 6: Let LLM rank and explain the candidates
+    console.log('🤖 [Generation] Step 6/7: AI ranking and explaining tracks (this may take 30-60 seconds)...');
     const rankedPlaylist = await rankAndExplainCandidates(
       uniqueCandidates,
       musicPlan,
@@ -373,8 +403,10 @@ export const generatePlaylist = async (
       userContext,
       preferences.playlistLength
     );
+    console.log('✅ [Generation] Ranked', rankedPlaylist.tracks.length, 'tracks');
     
     // Step 7: Build final track list based on LLM selections
+    console.log('📝 [Generation] Step 7/7: Building final playlist...');
     const finalTracks: Track[] = [];
     const trackMap = new Map<string, Track>();
     const finalRecommendations: TrackRecommendation[] = [];
@@ -530,6 +562,9 @@ export const generatePlaylist = async (
       };
     });
     
+    console.log('✅ [Generation] Playlist complete! Generated', finalTracks.length, 'tracks');
+    console.log('🎉 [Generation] Total time: Check network tab for timing details');
+    
     return {
       tracks: finalTracks,
       recommendations: validatedRecommendations,
@@ -539,7 +574,7 @@ export const generatePlaylist = async (
       generatedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Failed to generate playlist:', error);
+    console.error('❌ [Generation] Failed to generate playlist:', error);
     throw new Error('Failed to generate playlist. Please try again.');
   }
 };

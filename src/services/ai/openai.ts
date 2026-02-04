@@ -168,8 +168,7 @@ ${userContext.weather ? `- Weather: ${userContext.weather.condition}, ${userCont
 
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       ...conversationHistory.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
@@ -226,8 +225,7 @@ ${userContext.tasteProfile ? formatTasteProfileForAI(userContext.tasteProfile) :
 
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
@@ -287,6 +285,9 @@ export const analyzeMoodFromChat = async (
   conversationHistory: ChatMessage[],
   userContext: UserContext
 ): Promise<MoodAnalysis> => {
+  console.log('🤖 [OpenAI] Analyzing mood for:', message.substring(0, 50) + '...');
+  const startTime = Date.now();
+  
   const contextInfo = `
 Current context:
 - Time: ${userContext.timeOfDay}
@@ -296,8 +297,7 @@ ${userContext.weather ? `- Weather: ${userContext.weather.condition}, ${userCont
 
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       ...conversationHistory.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
@@ -334,9 +334,13 @@ Energy: 0 = very calm/low energy, 1 = very energetic/intense`
   });
 
   const content = response.choices[0]?.message?.content || '{}';
+  const elapsed = Date.now() - startTime;
+  console.log(`✅ [OpenAI] Mood analyzed in ${elapsed}ms`);
+  
   try {
     return JSON.parse(content.replace(/```json\n?|\n?```/g, ''));
   } catch {
+    console.warn('⚠️ [OpenAI] Failed to parse mood analysis, using fallback');
     return {
       startPoint: { valence: 0, energy: 0.5 },
       endPoint: { valence: 0, energy: 0.5 },
@@ -355,14 +359,16 @@ export const generatePlaylistRecommendations = async (
   userContext: UserContext,
   trackCount: number = 10
 ): Promise<PlaylistRecommendation> => {
+  console.log(`🤖 [OpenAI] Generating ${trackCount} track recommendations...`);
+  const startTime = Date.now();
+  
   const tasteInfo = userContext.tasteProfile 
     ? formatTasteProfileForAI(userContext.tasteProfile)
     : 'No taste profile - recommend popular and varied tracks.';
 
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
@@ -436,21 +442,26 @@ CRITICAL: EVERY track MUST have BOTH tasteAlignment.score AND moodFit.score as n
   });
 
   const content = response.choices[0]?.message?.content || '{}';
-  return safeParsePlaylistJSON(content);
+  const result = safeParsePlaylistJSON(content);
+  const elapsed = Date.now() - startTime;
+  console.log(`✅ [OpenAI] Generated ${result.tracks.length} recommendations in ${elapsed}ms`);
+  return result;
 };
 
 export const deriveMusicPlan = async (
   moodAnalysis: MoodAnalysis,
   userContext: UserContext
 ): Promise<MusicPlan> => {
+  console.log('🤖 [OpenAI] Deriving music plan...');
+  const startTime = Date.now();
+  
   const tasteInfo = userContext.tasteProfile
     ? formatTasteProfileForAI(userContext.tasteProfile)
     : 'No taste profile - use broad, popular music constraints.';
 
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
@@ -507,7 +518,10 @@ Rules:
   });
 
   const content = response.choices[0]?.message?.content || '{}';
-  return safeParsePlanJSON(content);
+  const result = safeParsePlanJSON(content);
+  const elapsed = Date.now() - startTime;
+  console.log(`✅ [OpenAI] Music plan created in ${elapsed}ms`);
+  return result;
 };
 
 export const rankAndExplainCandidates = async (
@@ -517,14 +531,16 @@ export const rankAndExplainCandidates = async (
   userContext: UserContext,
   trackCount: number = 10
 ): Promise<PlaylistRecommendation> => {
+  console.log(`🤖 [OpenAI] Ranking ${candidates.length} candidates (requesting ${trackCount} tracks)...`);
+  console.log('⏱️ [OpenAI] This is the slowest step - typically 30-60 seconds');
+  
   const tasteInfo = userContext.tasteProfile
     ? formatTasteProfileForAI(userContext.tasteProfile)
     : 'No taste profile - prioritize general fit.';
 
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
@@ -589,6 +605,8 @@ MANDATORY:
   });
 
   const content = response.choices[0]?.message?.content || '{}';
+  console.log('🔍 [OpenAI] Ranking response length:', content.length, 'chars');
+  console.log('🔍 [OpenAI] Ranking response preview:', content.substring(0, 500));
   return safeParsePlaylistJSON(content);
 };
 
@@ -645,7 +663,10 @@ const safeParsePlanJSON = (content: string): MusicPlan => {
 const safeParsePlaylistJSON = (content: string): PlaylistRecommendation => {
   try {
     const cleaned = content.replace(/```json\n?|\n?```/g, '').trim();
+    console.log('🔍 [OpenAI] Cleaned JSON length:', cleaned.length);
     const parsed = JSON.parse(cleaned);
+    console.log('🔍 [OpenAI] Parsed object keys:', Object.keys(parsed));
+    console.log('🔍 [OpenAI] Parsed tracks count:', parsed.tracks?.length || 0);
     
     // Validate and fix track structure
     if (parsed.tracks && Array.isArray(parsed.tracks)) {
@@ -688,13 +709,15 @@ const safeParsePlaylistJSON = (content: string): PlaylistRecommendation => {
       });
     }
     
+    console.log(`✅ [OpenAI] Ranked ${parsed.tracks?.length || 0} tracks successfully`);
+    
     return {
       tracks: parsed.tracks || [],
       playlistDescription: parsed.playlistDescription || 'Curated for your mood and taste',
       moodJourney: parsed.moodJourney || 'A journey through your requested vibe'
     };
   } catch (error) {
-    console.error('Failed to parse playlist JSON:', error);
+    console.error('❌ [OpenAI] Failed to parse playlist JSON:', error);
     return {
       tracks: [],
       playlistDescription: 'Unable to generate recommendations',
@@ -710,8 +733,7 @@ export const generateChatResponse = async (
 ): Promise<string> => {
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT + `\n\nRespond conversationally and warmly. Keep responses concise (2-3 sentences). If you've analyzed their mood, acknowledge it empathetically. Don't use JSON in this response - just natural conversation.` },
       ...conversationHistory.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
@@ -734,8 +756,7 @@ export const analyzeEmotionFromMapClick = async (
 ): Promise<MoodAnalysis> => {
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {
@@ -784,8 +805,7 @@ export const getQuickVibeMood = async (
 ): Promise<MoodAnalysis> => {
   const response = await openai.chat.completions.create({
     model: config.openai.model,
-    temperature: config.openai.temperature,
-    max_tokens: config.openai.maxTokens,
+    max_completion_tokens: config.openai.maxTokens,
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       {

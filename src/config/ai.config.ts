@@ -76,18 +76,18 @@ export interface AIConfig {
  */
 export const defaultAIConfig: AIConfig = {
   openai: {
-    // Default model - change based on your needs and budget
-    // Options: "gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", etc.
-    model: process.env.REACT_APP_OPENAI_MODEL || 'gpt-4',
+    // Default model - GPT-5.2 is the latest and best
+    // Options: "gpt-5.2-chat-latest", "gpt-5.2", "gpt-5", "gpt-4o", etc.
+    model: process.env.REACT_APP_OPENAI_MODEL || 'gpt-5.2-chat-latest',
     
-    // Max tokens per response
-    maxTokens: 2000,
+    // Max tokens per response (4000 needed for ranking 30 candidates into 10 detailed tracks)
+    maxTokens: 40000,
     
     // Temperature (0 = focused, 2 = creative)
     temperature: 0.7,
     
-    // Request timeout (30 seconds)
-    timeout: 30000,
+    // Request timeout (90 seconds for GPT-5.2 with larger responses)
+    timeout: 90000,
   },
 
   generation: {

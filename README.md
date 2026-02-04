@@ -253,8 +253,8 @@ Built on top of a **Spotify Web Client** with:
    # OpenAI Configuration (for AI features)
    REACT_APP_OPENAI_API_KEY=<your_openai_api_key>
    
-   # Optional: Customize OpenAI model (defaults to gpt-4)
-   # REACT_APP_OPENAI_MODEL=gpt-4-turbo
+   # Optional: Customize OpenAI model (defaults to gpt-5.2-chat-latest)
+   # REACT_APP_OPENAI_MODEL=gpt-5
    ```
 
    **Get your credentials:**
@@ -365,8 +365,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - AI features use OpenAI's API (configurable model)
 - Each playlist generation makes 3-4 API calls
-- Estimated cost varies by model (~$0.01-0.03 per generation for GPT-4)
-- Configure model and timeouts in `src/config/ai.config.ts`
+- Estimated cost varies by model
+- Configure model and timeouts in src/config/ai.config.ts
 - Consider implementing rate limiting for production
 
 ### API Rate Limits

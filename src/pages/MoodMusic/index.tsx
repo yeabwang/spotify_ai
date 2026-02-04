@@ -18,7 +18,6 @@ import {
   setShowEmotionMap,
   loadSavedVibe,
   deleteVibe,
-  RecommendedTrack,
 } from '../../store/slices/moodMusic';
 import { playerService } from '../../services/player';
 import { playlistService } from '../../services/playlists';
@@ -547,15 +546,11 @@ const MoodMusicPage: React.FC = () => {
                             </div>
                           </div>
                           
-                          {/* Combined Match Score */}
-                          {combinedMatch >= 90 ? (
-                            <div className="match-score-combined high">
-                              <span className="score-value">{combinedMatch}%</span>
-                              <span className="score-label">match</span>
-                            </div>
-                          ) : (
-                            <div className="match-score-combined empty" />
-                          )}
+                          {/* Combined Match Score - Always Show */}
+                          <div className={`match-score-combined ${combinedMatch >= 85 ? 'high' : combinedMatch >= 70 ? 'medium' : 'low'}`}>
+                            <span className="score-value">{combinedMatch}%</span>
+                            <span className="score-label">match</span>
+                          </div>
                           
                           <div className="track-actions">
                             <button 

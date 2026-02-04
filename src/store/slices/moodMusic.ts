@@ -1,11 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { 
   generateMusicForContext,
-  generatePlaylistRecommendations,
-  deriveMusicPlan,
-  rankAndExplainCandidates,
-  analyzeEmotionFromMapClick,
   getQuickVibeMood,
+  analyzeEmotionFromMapClick,
   MoodAnalysis, 
   ChatMessage, 
   UserContext,
@@ -13,9 +10,9 @@ import {
   TrackRecommendation,
   ConversationAnalysis
 } from '../../services/ai/openai';
+import { generatePlaylist } from '../../services/ai/generation';
 import { buildUserContext } from '../../services/contextService';
 import { querySearch } from '../../services/search';
-import { playlistService } from '../../services/playlists';
 import { Track } from '../../interfaces/track';
 import { RootState } from '../store';
 import type { UserTasteProfile } from '../../services/userTaste';
@@ -209,72 +206,37 @@ export const fetchRecommendationsForMood = createAsyncThunk<
   'moodMusic/fetchRecommendations',
   async (_, { getState }) => {
     const state = getState();
-    const { currentMood, userContext, tasteProfile } = state.moodMusic;
+    const { currentMood, messages } = state.moodMusic;
     
     if (!currentMood) throw new Error('No mood set');
     
-    // Build context with taste profile for personalized recommendations
-    const baseContext = userContext || await buildUserContext();
-    const context: UserContext = {
-      ...baseContext,
-      tasteProfile: tasteProfile || undefined,
-    };
+    // Use the generation service which follows the correct flow:
+    // 1. Load preferences
+    // 2. Fetch taste profile
+    // 3. LLM mood analysis (already done - currentMood)
+    // 4. Derive music plan
+    // 5. Generate search queries
+    // 6. Search Spotify (using Search API, not Recommendations API)
+    // 7. LLM rank & explain
+    // 8. Update preferences
     
-    // Agentic orchestration: plan -> retrieve candidates -> rank + explain
-    try {
-      const plan = await deriveMusicPlan(currentMood, context);
+    // Create a prompt from the mood description for the generation service
+    const prompt = currentMood.moodDescription;
+    
+    const result = await generatePlaylist(prompt, messages, true);
+    
+    // Map the result to RecommendedTrack format
+    const recommendations: RecommendedTrack[] = result.recommendations.map((rec, index) => ({
+      ...rec,
+      spotifyTrack: result.tracks[index],
+      isLoading: false,
+    }));
 
-      const { getTasteSeeds, getEmptyTasteProfile } = await import('../../services/userTaste');
-      const seeds = getTasteSeeds(tasteProfile || getEmptyTasteProfile(), { genres: currentMood.suggestedGenres });
-
-      const candidateResponse = await playlistService.getRecommendations({
-        ...seeds,
-        limit: 50,
-      });
-
-      const candidates = (candidateResponse.data.tracks || []).slice(0, 40).map(track => ({
-        id: track.id,
-        name: track.name,
-        artists: track.artists.map(a => a.name),
-        album: track.album?.name,
-        popularity: track.popularity,
-      }));
-
-      if (candidates.length === 0) throw new Error('No candidates returned');
-
-      const ranked = await rankAndExplainCandidates(candidates, plan, currentMood, context, 10);
-
-      const candidateMap = new Map(candidateResponse.data.tracks.map(t => [t.id, t]));
-
-      const recommendations: RecommendedTrack[] = ranked.tracks.map(track => {
-        const spotifyTrack = track.spotifyId ? candidateMap.get(track.spotifyId) : undefined;
-        return {
-          ...track,
-          spotifyTrack,
-          isLoading: !spotifyTrack,
-        };
-      });
-
-      return {
-        recommendations,
-        description: ranked.playlistDescription,
-        journey: ranked.moodJourney,
-      };
-    } catch (error) {
-      console.warn('Agentic orchestration failed, falling back:', error);
-      const playlist = await generatePlaylistRecommendations(currentMood, context, 10);
-
-      const recommendations: RecommendedTrack[] = playlist.tracks.map(track => ({
-        ...track,
-        isLoading: true,
-      }));
-
-      return {
-        recommendations,
-        description: playlist.playlistDescription,
-        journey: playlist.moodJourney,
-      };
-    }
+    return {
+      recommendations,
+      description: result.playlistDescription,
+      journey: result.moodJourney,
+    };
   }
 );
 

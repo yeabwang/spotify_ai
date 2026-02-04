@@ -10,7 +10,7 @@
   "bugs": {
     "url": "https://github.com/yeabwang/spotify_ai/issues"
   },
-  "homepage": "https://github.com/yeabwang/spotify_ai#readme",
+  "homepage": "/",
   "private": true,
   "dependencies": {
     "@ant-design/pro-form": "^2.32.0",
